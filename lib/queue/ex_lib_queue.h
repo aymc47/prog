@@ -23,6 +23,11 @@ typedef struct {
     pthread_mutex_t m_mutex;
 } WaitQueue;
 
+typedef struct {
+    Queue m_queue;
+    pthread_cond_t m_cond;
+    pthread_mutex_t m_mutex;
+} WaitQueueISR;
 
 extern int lib_queue_init(Queue* in_ins_ptr);
 extern int lib_queue_push(Queue* in_ins_ptr, Node* in_node_ptr);
@@ -30,9 +35,14 @@ extern Node* lib_queue_pop(Queue* in_ins_ptr, int* out_rc_ptr);
 extern Node* lib_queue_get(Queue* in_ins_ptr, Node* in_node_ptr, int* out_rc_ptr);
 extern int* lib_queue_remove(Queue* in_ins_ptr, Node* in_node_ptr);
 
-extern int lib_wait_queue_init(Queue* in_ins_ptr);
-extern int lib_wait_queue_push(Queue* in_ins_ptr, Node* in_node_ptr);
-extern Node* lib_wait_queue_pop(Queue* in_ins_ptr);
-extern int lib_wait_queue_push(Queue* in_ins_ptr, Node* in_node_ptr);
+extern int lib_wait_queue_init(WaitQueue* in_ins_ptr);
+extern int lib_wait_queue_push(WaitQueue* in_ins_ptr, Node* in_node_ptr);
+extern Node* lib_wait_queue_pop(WaitQueue* in_ins_ptr,int* out_rc_ptr);
+
+// Linuxだと実装ができないので、
+extern int lib_wait_queue_init_from_isr(WaitQueueISR* in_ins_ptr);
+extern int lib_wait_queue_push_from_isr(WaitQueueISR* in_ins_ptr, Node* in_node_ptr);
+extern Node* lib_wait_queue_pop_from_isr(WaitQueueISR* in_ins_ptr,int* out_rc_ptr);
+
 
 #endif
