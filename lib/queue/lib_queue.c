@@ -146,51 +146,36 @@ Node* lib_wait_queue_pop(WaitQueue* in_ins_ptr,int* out_rc_ptr){
     return ret_ptr;
 }
 
-int lib_wait_queue_init_from_isr(WaitQueueISR* in_ins_ptr)
-{
-    if (in_ins_ptr == NULL) return -1;
-
-    in_ins_ptr->m_queue.m_front_ptr = NULL;
-    in_ins_ptr->m_queue.m_rear_ptr  = NULL;
-
-    pthread_mutex_init(&in_ins_ptr->m_mutex, NULL);
-    pthread_cond_init(&in_ins_ptr->m_cond, NULL);
-
-    return 0;
-}
-
-int lib_wait_queue_push_from_isr(WaitQueueISR* in_ins_ptr, Node* in_node_ptr)
+int lib_event_init(WaitEvent* in_ins_ptr)
 {
     int rc = 0;
-    if ((in_ins_ptr == NULL) || (in_node_ptr == NULL)) return -1;
+    if (in_ins_ptr == NULL) return -1;
 
-    pthread_mutex_lock(&in_ins_ptr->m_mutex);
-
-    rc = lib_queue_push(&in_ins_ptr->m_queue, in_node_ptr);
-
-    pthread_cond_signal(&in_ins_ptr->m_cond);
-    pthread_mutex_unlock(&in_ins_ptr->m_mutex);
+    (void)pthread_mutex_init(&in_ins_ptr->m_mutex, NULL);
+    (void)pthread_cond_init(&in_ins_ptr->m_cond, NULL);
+    
+    in_ins_ptr->m_count = 0;
 
     return rc;
 }
 
-Node* lib_wait_queue_pop_from_isr(WaitQueueISR* in_ins_ptr,int* out_rc_ptr){
-    int rc = 0;
-    Node* ret_ptr = NULL;
+int lib_event_wakeup_from_isr(WaitEvent* in_ins_ptr){
+    if (in_ins_ptr == NULL) return -1;
+    
+    pthread_mutex_lock(&in_ins_ptr->m_mutex);
+    in_ins_ptr->m_count++;
+    pthread_cond_signal(&in_ins_ptr->m_cond);
+    pthread_mutex_unlock(&in_ins_ptr->m_mutex);
 
-    if (!in_ins_ptr || !out_rc_ptr) rc = -1;
-    if (!rc){
-        pthread_mutex_lock(&in_ins_ptr->m_mutex);
+    return 0;
+}
+int lib_event_wait_isr(WaitEvent* in_ins_ptr){
+    if (in_ins_ptr == NULL) return -1;
 
-        while (in_ins_ptr->m_queue.m_front_ptr == NULL) {
-            pthread_cond_wait(&in_ins_ptr->m_cond, &in_ins_ptr->m_mutex);
-        }
-
-        ret_ptr = lib_queue_pop(&in_ins_ptr->m_queue, &rc);
-
-        pthread_mutex_unlock(&in_ins_ptr->m_mutex);
+    pthread_mutex_lock(&in_ins_ptr->m_mutex);
+    while(in_ins_ptr->m_count) {
+        pthread_cond_wait(&in_ins_ptr->m_cond, &in_ins_ptr->m_mutex);
     }
-    if(out_rc_ptr) *out_rc_ptr = rc;
-
-    return ret_ptr;
+    pthread_mutex_unlock(&in_ins_ptr->m_mutex);
+    return 0;
 }

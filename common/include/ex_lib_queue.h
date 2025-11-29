@@ -24,6 +24,12 @@ typedef struct {
 } WaitQueue;
 
 typedef struct {
+    uint8_t m_count;
+    pthread_cond_t m_cond;
+    pthread_mutex_t m_mutex;
+} WaitEvent;
+
+typedef struct {
     Queue m_queue;
     pthread_cond_t m_cond;
     pthread_mutex_t m_mutex;
@@ -39,10 +45,8 @@ extern int lib_wait_queue_init(WaitQueue* in_ins_ptr);
 extern int lib_wait_queue_push(WaitQueue* in_ins_ptr, Node* in_node_ptr);
 extern Node* lib_wait_queue_pop(WaitQueue* in_ins_ptr,int* out_rc_ptr);
 
-// Linuxだと実装ができないので、
-extern int lib_wait_queue_init_from_isr(WaitQueueISR* in_ins_ptr);
-extern int lib_wait_queue_push_from_isr(WaitQueueISR* in_ins_ptr, Node* in_node_ptr);
-extern Node* lib_wait_queue_pop_from_isr(WaitQueueISR* in_ins_ptr,int* out_rc_ptr);
-
+extern int lib_event_init(WaitEvent* in_ins_ptr);
+extern int lib_event_wait_isr(WaitEvent* in_ins_ptr);
+extern int lib_event_wakeup_from_isr(WaitEvent* in_ins_ptr);
 
 #endif
