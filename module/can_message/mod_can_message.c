@@ -79,7 +79,7 @@ SharedCanMessage* mod_can_message_copy(CanMessage* in_can_msg_ptr,int* out_rc_pt
     return shr_can_msg_ptr;
 }
 
-int mod_can_message_release(SharedCanMessage* in_shr_msg_ptr){
+int mod_can_shared_message_release(SharedCanMessage* in_shr_msg_ptr){
     int rc=0;
     CanMessage* can_msg_ptr;
 
@@ -95,7 +95,20 @@ int mod_can_message_release(SharedCanMessage* in_shr_msg_ptr){
         disable_interrupt();
         can_msg_ptr->m_count--;
         if (can_msg_ptr->m_count <= 0){
-            rc = lib_queue_push(&s_can_msg_q,&in_shr_msg_ptr->m_node);
+            rc = lib_queue_push(&s_can_msg_q,&can_msg_ptr->m_node);
+        }
+        enable_interrupt();
+    }
+    return rc;
+}
+
+int mod_can_message_release(CanMessage* in_can_msg_ptr){
+    int rc=-1;
+
+    if(!in_can_msg_ptr){
+        disable_interrupt();
+        if (in_can_msg_ptr->m_count <= 0){
+            rc = lib_queue_push(&s_can_msg_q,&in_can_msg_ptr->m_node);
         }
         enable_interrupt();
     }

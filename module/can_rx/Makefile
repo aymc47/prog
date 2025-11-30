@@ -13,7 +13,7 @@ SOURCES=$(wildcard *.c)
 OBJECTS=$(SOURCES:.c=.o)
 
 # 出力するライブラリ名
-TARGET=libcanmessage.a
+TARGET=libcan_rx.a
 
 # コンパイラの指定
 CC=gcc
