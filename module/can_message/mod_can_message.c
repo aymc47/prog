@@ -83,9 +83,10 @@ int mod_can_shared_message_release(SharedCanMessage* in_shr_msg_ptr){
     int rc=0;
     CanMessage* can_msg_ptr;
 
-    if(!in_shr_msg_ptr) rc = -1;
+    if(!in_shr_msg_ptr) {rc = -1;}
+    else{can_msg_ptr = in_shr_msg_ptr->m_msg_ptr;} 
+    
     if (!rc){
-        can_msg_ptr = in_shr_msg_ptr->m_msg_ptr;
         disable_interrupt();
         rc = lib_queue_push(&s_shr_can_msg_q,&in_shr_msg_ptr->m_node);
         enable_interrupt();
