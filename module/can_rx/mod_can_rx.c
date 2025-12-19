@@ -2,18 +2,13 @@
 #include <string.h>
 #include "ex_mod_interface.h"
 #include "ex_mod_can_message.h"
-
+#include "ex_mod_can_channel.h"
 typedef struct {
     uint32_t m_transfer_ch_flg;
 }TRANSFER_ST;
 
 #define ID2FLAG(id) (1 << (id))
 static TRANSFER_ST g_transfer_st[2048];
-
-static inline size_t min_size(size_t a, size_t b)
-{
-    return (a < b) ? a : b;
-}
 
 static inline bool check_transfer_id(uint8_t in_ch_id, CanMessage *in_can_msg_ptr, int* out_rc_ptr) {
     int rc = 0;
@@ -40,6 +35,14 @@ int mod_can_rx_main_process(void){
     CanMessage *can_msg_ptr = NULL;
     Node* node_ptr = NULL;
 
+    for(int i=0; rc == 0 && i < TX_CHANNEL_NUM; i++){
+        can_msg_ptr = mod_can_channel_rcv_msg(i, &rc);
+        while(!rc && can_msg_ptr==NULL){
+            rc = lib_queue_push(&g_mod_if_can_rx_q, &can_msg_ptr->m_node);
+            if(!rc) can_msg_ptr = mod_can_channel_rcv_msg(i, &rc);
+        }
+    }
+    
     node_ptr = lib_queue_pop(&g_mod_if_can_rx_q,&rc);
     if(!rc && node_ptr==NULL){rc = -1;}
     else{
@@ -59,26 +62,3 @@ int mod_can_rx_main_process(void){
     if(!rc) rc = mod_can_message_release(can_msg_ptr);
     return rc;
 }
-
-int mod_can_rx_notify(uint8_t in_ch_id,uint8_t in_msg_id,uint16_t in_data_len,uint8_t* in_data_ptr)
-{
-    int rc = 0;
-    CanMessage *can_msg_ptr = NULL;
-
-    can_msg_ptr = mod_can_message_alloc(&rc);
-    if(!rc && can_msg_ptr==NULL)rc = -1;
-    if(!rc) {
-        size_t copy_size = 0;
-        void *cpy_ptr;
-        can_msg_ptr->m_ch_id = in_ch_id;
-        can_msg_ptr->m_msg_id = in_msg_id;
-        can_msg_ptr->m_data_len = in_data_len;
-        copy_size = min_size(in_data_len,sizeof(can_msg_ptr->m_data_array));
-        cpy_ptr = memcpy(can_msg_ptr->m_data_array, in_data_ptr, copy_size);
-        if(cpy_ptr != can_msg_ptr->m_data_array) rc = -1;
-    }
-    if(!rc) rc = lib_queue_push(&g_mod_if_can_rx_q, &can_msg_ptr->m_node);
-
-    return rc;
-}
-

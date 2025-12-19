@@ -25,7 +25,7 @@ typedef struct {
 } SharedCanMessage;
 
 extern int mod_can_message_init(void);
-extern CanMessage* mod_can_message_alloc(int* out_rc_ptr);
+extern CanMessage* mod_can_message_alloc(int* out_rc_ptr);  /*interrupt ok*/
 extern SharedCanMessage* mod_can_message_copy(CanMessage* in_can_msg_ptr,int* out_rc_ptr);
 extern int mod_can_message_release(CanMessage* in_shr_can_msg_ptr);
 extern int mod_can_shared_message_release(SharedCanMessage* in_shr_can_msg_ptr);
