@@ -9,7 +9,6 @@
 
 #include "ex_lib_queue.h"
 #include "ex_mod_can_message.h"
-#include "ex_mod_interface.h"
 
 #define TX_CHANNEL_0    0
 #define TX_CHANNEL_1    1

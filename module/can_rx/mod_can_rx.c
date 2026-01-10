@@ -1,14 +1,16 @@
 
 #include <string.h>
-#include "ex_mod_interface.h"
 #include "ex_mod_can_message.h"
 #include "ex_mod_can_channel.h"
+#include "ex_mod_can_rx.h"
+#include "ex_mod_can_tx.h"
 typedef struct {
     uint32_t m_transfer_ch_flg;
 }TRANSFER_ST;
 
 #define ID2FLAG(id) (1 << (id))
 static TRANSFER_ST g_transfer_st[2048];
+Queue g_mod_if_can_rx_q;
 
 static inline bool check_transfer_id(uint8_t in_ch_id, CanMessage *in_can_msg_ptr, int* out_rc_ptr) {
     int rc = 0;
@@ -22,11 +24,14 @@ static inline bool check_transfer_id(uint8_t in_ch_id, CanMessage *in_can_msg_pt
 }
 
 int mod_can_rx_init(void){
+    int rc = 0;
     for(int i=0; i < 2048; i++){
         g_transfer_st[i].m_transfer_ch_flg 
             = (ID2FLAG(TX_CHANNEL_0)|ID2FLAG(TX_CHANNEL_1)|ID2FLAG(TX_CHANNEL_2)|ID2FLAG(TX_CHANNEL_3));
     }
-    return 0;
+
+    rc = lib_queue_init(&g_mod_if_can_rx_q);
+    return rc;
 }
 
 int mod_can_rx_main_process(void){
@@ -54,7 +59,7 @@ int mod_can_rx_main_process(void){
         if(check_transfer_id(i, can_msg_ptr, &rc)){
             SharedCanMessage* shared_can_msg_ptr = mod_can_message_copy(can_msg_ptr, &rc);
             if(!shared_can_msg_ptr && rc == 0){
-                rc = lib_queue_push(&g_mod_if_can_tx_q[i], &shared_can_msg_ptr->m_node);
+                rc = mod_can_tx_send_msg(i, shared_can_msg_ptr);
             }
         }
     }
