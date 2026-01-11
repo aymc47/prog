@@ -17,8 +17,8 @@ typedef struct {
 
 typedef struct {
     uint8_t m_channel_id;
-    CanChannelSndCb m_snd_cb_ptr;
-    CanChannelRcvCb m_rcv_cb_ptr;
+    CanChannelSndCbFromISR m_snd_cb_ptr;
+    CanChannelRcvCbFromISR m_rcv_cb_ptr;
     Queue m_rcv_q;
 
     CanMailbox m_mailbox_array[MAILBOX_SIZE_MAX];
@@ -61,7 +61,7 @@ int mod_can_channel_init(void){
     return rc;
 }
 
-int mod_can_channel_set_snd_cb(uint8_t in_channel_id, CanChannelSndCb in_snd_cb_ptr){
+int mod_can_channel_set_snd_cb_from_isr(uint8_t in_channel_id, CanChannelSndCbFromISR in_snd_cb_ptr){
     int rc = 0;
     CanChannel* can_channel_ptr = NULL;
     
@@ -73,7 +73,7 @@ int mod_can_channel_set_snd_cb(uint8_t in_channel_id, CanChannelSndCb in_snd_cb_
     return rc;
 }
 
-int mod_can_channel_set_rcv_cb(uint8_t in_channel_id, CanChannelRcvCb in_rcv_cb_ptr){
+int mod_can_channel_set_rcv_cb_from_isr(uint8_t in_channel_id, CanChannelRcvCbFromISR in_rcv_cb_ptr){
     int rc = 0;
     CanChannel* can_channel_ptr = NULL;
     

@@ -48,7 +48,7 @@ clean:
 .PHONY: all clean
 
 # installタスク
-install: $(TARGET)
+install:
 	cp $(TARGET) $(INSDIR_BIN)$(TARGET)
 	cp $(INSDIR_HEADER) $(INSDIR_INCLUDES)$(INSDIR_HEADER)
 
