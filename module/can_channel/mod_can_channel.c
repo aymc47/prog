@@ -23,6 +23,8 @@ typedef struct {
 
     CanMailbox m_mailbox_array[MAILBOX_SIZE_MAX];
     Queue m_free_mbx_q;
+
+    Queue m_can_msg_wait_q;
 } CanChannel;
 
 static CanChannel s_can_channel_array[TX_CHANNEL_NUM];
@@ -57,6 +59,7 @@ int mod_can_channel_init(void){
         can_channel_ptr->m_rcv_cb_ptr = NULL;
         rc = lib_queue_init(&can_channel_ptr->m_rcv_q);
         if(!rc) rc = can_channel_mbx_init(can_channel_ptr);
+        if(!rc) rc = lib_queue_init(&can_channel_ptr->m_can_msg_wait_q);
     }
     return rc;
 }
@@ -89,15 +92,23 @@ int mod_can_channel_send_msg(uint8_t in_channel_id, SharedCanMessage* in_can_sha
     int rc = 0;
     CanChannel* can_channel_ptr = NULL;
 
-    if(in_channel_id >= TX_CHANNEL_NUM){rc = -1;}
+    if(in_channel_id >= TX_CHANNEL_NUM || in_can_shared_msg_ptr == NULL){rc = -1;}
     if(!rc){
         can_channel_ptr = &s_can_channel_array[in_channel_id];
         Node* node_ptr = lib_queue_pop(&can_channel_ptr->m_free_mbx_q,&rc);
-        if(!rc && node_ptr==NULL){rc = -1;}
-        else{
-            CanMailbox* can_mbx_ptr = node_ptr->m_body_ptr;
-            can_mbx_ptr->m_can_msg_ptr = in_can_shared_msg_ptr;
-            printf("Sending message on channel %d", in_channel_id);
+        if(!rc) {
+            if(node_ptr==NULL){
+                printf("no mail box %d\n", in_channel_id);
+                interrupt_disabled();
+                rc = lib_queue_push(&can_channel_ptr->m_can_msg_wait_q,in_can_shared_msg_ptr);
+                interrupt_enabled();
+            }
+            else{
+                CanMailbox* can_mbx_ptr = node_ptr->m_body_ptr;
+                can_mbx_ptr->m_can_msg_ptr = in_can_shared_msg_ptr;
+                printf("Sending message on channel %d\n", in_channel_id);
+                mod_can_message_print(in_can_shared_msg_ptr->m_msg_ptr);
+            }
         }
     }
     return rc;
@@ -111,20 +122,20 @@ CanMessage* mod_can_channel_rcv_msg(uint8_t in_channel_id, int* out_rc_ptr){
     if(in_channel_id >= TX_CHANNEL_NUM){rc = -1;}
     if(!rc){
         can_channel_ptr = &s_can_channel_array[in_channel_id];
-        printf("Receiving message on channel %d\n", in_channel_id);
         interrupt_disabled();
         Node* node_ptr = lib_queue_pop(&can_channel_ptr->m_rcv_q,&rc);
         interrupt_enabled();
-        if(!rc && node_ptr==NULL){rc = -1;}
-        else{
+        if(!rc && node_ptr!=NULL){
             return_can_msg_ptr = node_ptr->m_body_ptr;
+            printf("Receiving message on channel %d\n", in_channel_id);
+            mod_can_message_print(return_can_msg_ptr);
         }
     }
     *out_rc_ptr = rc;
     return return_can_msg_ptr;
 }
 
-void rcv_interrupt_handler(uint8_t in_channel_id,uint8_t in_msg_id,uint16_t in_data_len,uint8_t* in_data_ptr)
+void rcv_interrupt_handler(uint8_t in_channel_id,uint32_t in_msg_id,uint16_t in_data_len,uint8_t* in_data_ptr)
 {
     CanChannel* can_channel_ptr = NULL;
     CanMessage* can_msg_ptr = NULL;

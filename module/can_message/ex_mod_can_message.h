@@ -2,6 +2,7 @@
 #ifndef _EX_MOD_CAN_MESSAGE_H_
 #define _EX_MOD_CAN_MESSAGE_H_
 
+#include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -29,5 +30,6 @@ extern CanMessage* mod_can_message_alloc(int* out_rc_ptr);
 extern SharedCanMessage* mod_can_message_copy(CanMessage* in_can_msg_ptr,int* out_rc_ptr);
 extern int mod_can_message_release(CanMessage* in_shr_can_msg_ptr);
 extern int mod_can_shared_message_release(SharedCanMessage* in_shr_can_msg_ptr);
+extern void mod_can_message_print(const CanMessage *msg);
 
 #endif  // _EX_MOD_CAN_MESSAGE_H_

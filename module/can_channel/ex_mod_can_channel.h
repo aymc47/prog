@@ -27,4 +27,6 @@ extern int mod_can_channel_set_rcv_cb_from_isr(uint8_t in_channel_id, CanChannel
 extern int mod_can_channel_send_msg(uint8_t in_channel_id, SharedCanMessage* in_can_msg_ptr);
 extern CanMessage* mod_can_channel_rcv_msg(uint8_t in_channel_id, int* out_rc_ptr);
 
+extern void rcv_interrupt_handler(uint8_t in_channel_id,uint32_t in_msg_id,uint16_t in_data_len,uint8_t* in_data_ptr);
+
 #endif  // _EX_MOD_CAN_CHANNEL_H_

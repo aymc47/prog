@@ -54,21 +54,21 @@ int mod_can_rx_main_process(void){
     /* Process messages in the queue and forward them to appropriate channels */
     if(!rc) {
         Node* node_ptr = lib_queue_pop(&g_mod_if_can_rx_q,&rc);
-    while(!rc && node_ptr != NULL){
-        can_msg_ptr = node_ptr->m_body_ptr;
-        if(can_msg_ptr == NULL) rc = -1;    
+        while(!rc && node_ptr != NULL){
+            can_msg_ptr = node_ptr->m_body_ptr;
+            if(can_msg_ptr == NULL) rc = -1;    
 
-        for(int i = 0; !rc && i < TX_CHANNEL_NUM; i++){
-            if(check_transfer_id(i, can_msg_ptr, &rc) && !rc){
-                SharedCanMessage* shared_can_msg_ptr = mod_can_message_copy(can_msg_ptr, &rc);
+            for(int i = 0; !rc && i < TX_CHANNEL_NUM; i++){
+                if(check_transfer_id(i, can_msg_ptr, &rc) && !rc){
+                    SharedCanMessage* shared_can_msg_ptr = mod_can_message_copy(can_msg_ptr, &rc);
                     if(!rc && shared_can_msg_ptr != NULL){
-                    rc = mod_can_tx_send_msg(i, shared_can_msg_ptr);
+                        rc = mod_can_tx_send_msg(i, shared_can_msg_ptr);
+                    }
                 }
             }
+            if(!rc) rc = mod_can_message_release(can_msg_ptr);
+            if(!rc) node_ptr = lib_queue_pop(&g_mod_if_can_rx_q,&rc);
         }
-        if(!rc) rc = mod_can_message_release(can_msg_ptr);
-        if(!rc) node_ptr = lib_queue_pop(&g_mod_if_can_rx_q,&rc);
-    }
     }
 
     return rc;

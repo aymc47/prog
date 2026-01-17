@@ -104,9 +104,10 @@ int mod_can_shared_message_release(SharedCanMessage* in_shr_msg_ptr){
 }
 
 int mod_can_message_release(CanMessage* in_can_msg_ptr){
-    int rc=-1;
+    int rc =0;
 
-    if(!in_can_msg_ptr){
+    if (in_can_msg_ptr == NULL) rc=-1;
+    if(!rc){
         disable_interrupt();
         if (in_can_msg_ptr->m_count <= 0){
             rc = lib_queue_push(&s_can_msg_q,&in_can_msg_ptr->m_node);
@@ -114,4 +115,26 @@ int mod_can_message_release(CanMessage* in_can_msg_ptr){
         enable_interrupt();
     }
     return rc;
+}
+
+void mod_can_message_print(const CanMessage *msg)
+{
+    uint16_t i;
+
+    if (msg == NULL) {
+        printf("CanMessage: NULL pointer\n");
+        return;
+    }
+
+    printf("CanMessage {\n");
+    printf("  ch_id    : %u\n",  msg->m_ch_id);
+    printf("  msg_id   : 0x%08X\n", msg->m_msg_id);
+    printf("  data_len : %u\n",  msg->m_data_len);
+
+    printf("  data     :");
+    for (i = 0; i < msg->m_data_len && i < MESSAGE_SIZE_MAX; i++) {
+        printf(" %02X", msg->m_data_array[i]);
+    }
+    printf("\n");
+    printf("}\n");
 }

@@ -24,7 +24,7 @@ int mod_can_tx_main_process(void){
 
     for(int i = 0; i < TX_CHANNEL_NUM; i++){
         node_ptr = lib_queue_pop(&g_mod_if_can_tx_q[i],&rc);
-        while(!rc && node_ptr==NULL){
+        while(!rc && node_ptr!=NULL){
             shared_can_msg_ptr = node_ptr->m_body_ptr;
             rc = mod_can_channel_send_msg(i, shared_can_msg_ptr);
             if(!rc) {
